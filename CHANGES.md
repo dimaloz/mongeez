@@ -1,5 +1,9 @@
 # Mongeez #
 
+### Version 0.9.7-dimaloz ###
+* Updated mongo-java-driver to 3.10.2 version<br>
+* Added new `runAsCommand` attribute to run scripts using the `db.runCommand()` method. It allows running scripts on MongoDB versions higher than 4.2.<br>
+
 ### Version 0.9.6 ###
 * added context parsing to formatted javascript changesets [#54](https://github.com/mongeez/mongeez/pull/54)
 
