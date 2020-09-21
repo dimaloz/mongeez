@@ -15,9 +15,17 @@ package org.mongeez;
 import com.mongodb.DB;
 import com.mongodb.DBObject;
 import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
 import com.mongodb.QueryBuilder;
+import de.flapdoodle.embed.mongo.MongodStarter;
+import de.flapdoodle.embed.mongo.config.IMongodConfig;
+import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
+import de.flapdoodle.embed.mongo.config.Net;
+import de.flapdoodle.embed.mongo.distribution.Version;
+import de.flapdoodle.embed.process.runtime.Network;
 import org.mongeez.validation.ValidationException;
 import org.springframework.core.io.ClassPathResource;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -25,15 +33,30 @@ import static org.testng.Assert.assertEquals;
 
 @Test
 public class MongeezTest {
-    private String dbName = "test_mongeez";
+    private final String dbName = "test_mongeez";
+    private final int port = 27019;
     private Mongo mongo;
     private DB db;
 
-    @BeforeMethod
+    @BeforeClass
     protected void setUp() throws Exception {
         mongo = new Mongo();
-        db = mongo.getDB(dbName);
+        MongodStarter starter = MongodStarter.getDefaultInstance();
+        String host = "localhost";
 
+        IMongodConfig mongodConfig = new MongodConfigBuilder()
+                .version(Version.Main.PRODUCTION)
+                .net(new Net(host, port, Network.localhostIsIPv6()))
+                .build();
+
+        starter.prepare(mongodConfig).start();
+
+        mongo = new MongoClient(host, port);
+        db = mongo.getDB(dbName);
+    }
+
+    @BeforeMethod
+    protected void setUpBeforeEachTest() {
         db.dropDatabase();
     }
 
