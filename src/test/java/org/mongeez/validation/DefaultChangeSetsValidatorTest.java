@@ -1,14 +1,18 @@
 package org.mongeez.validation;
 
+import org.junit.jupiter.api.Test;
+import org.mongeez.commands.ChangeSet;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import org.mongeez.commands.ChangeSet;
-import org.testng.annotations.Test;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 
 public class DefaultChangeSetsValidatorTest {
 
-    @Test(expectedExceptions = ValidationException.class)
+    @Test
     public void testDetectDuplicateFirstHalf() throws Exception {
         DefaultChangeSetsValidator validator = new DefaultChangeSetsValidator();
 
@@ -24,10 +28,11 @@ public class DefaultChangeSetsValidatorTest {
         changeSets.add(makeChangeSet("8"));
         changeSets.add(makeChangeSet("9"));
         changeSets.add(makeChangeSet("10"));
-        validator.validate(changeSets);
+
+        assertThrows(ValidationException.class, () -> validator.validate(changeSets));
     }
 
-    @Test(expectedExceptions = ValidationException.class)
+    @Test
     public void testDetectDuplicateSecondHalf() throws Exception {
         DefaultChangeSetsValidator validator = new DefaultChangeSetsValidator();
 
@@ -43,11 +48,12 @@ public class DefaultChangeSetsValidatorTest {
         changeSets.add(makeChangeSet("8"));
         changeSets.add(makeChangeSet("10"));
         changeSets.add(makeChangeSet("10"));
-        validator.validate(changeSets);
+
+        assertThrows(ValidationException.class, () -> validator.validate(changeSets));
     }
 
     @Test
-    public void testValidateNoDuplicates() throws Exception {
+    public void testValidateNoDuplicates() {
         DefaultChangeSetsValidator validator = new DefaultChangeSetsValidator();
 
         List<ChangeSet> changeSets = new ArrayList<ChangeSet>();
@@ -62,7 +68,8 @@ public class DefaultChangeSetsValidatorTest {
         changeSets.add(makeChangeSet("8"));
         changeSets.add(makeChangeSet("9"));
         changeSets.add(makeChangeSet("10"));
-        validator.validate(changeSets);
+
+        assertDoesNotThrow(() -> validator.validate(changeSets));
     }
 
     private ChangeSet makeChangeSet(String id) {
