@@ -12,19 +12,17 @@
       runs-on: ubuntu-latest
       steps:
       - uses: actions/checkout@v2
-      - name: Set up JDK 1.8 test
+      - name: 'Set up JDK 1.8 test'
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-      - name: Build with Maven
+      - name: 'Build with Maven'
         run: mvn -B package --file pom.xml
-      - name: Create test report
+      - name: 'Create test report'
         run: surefire-report:report-only -f pom.xml
-
-
-- name: 'Publish Test Report'
-  if: always()
-  uses: actions/upload-artifact@v2-preview
-  with:
-    name: 'test-report'
-    path: target/site/surefire-report.html
+      - name: 'Publish Test Report'
+        if: always()
+        uses: actions/upload-artifact@v2-preview
+        with:
+          name: 'test-report'
+          path: target/site/surefire-report.html
