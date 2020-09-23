@@ -19,7 +19,7 @@ jobs:
     - name: 'Build with Maven'
       run: mvn -B package --file pom.xml
     - name: 'Create test report'
-      run: surefire-report:report-only -f pom.xml
+      run: mvn surefire-report:report-only --file pom.xml
     - name: 'Publish Test Report'
       if: always()
       uses: actions/upload-artifact@v2-preview
