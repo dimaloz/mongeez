@@ -13,7 +13,7 @@
 <mongoChangeLog>
     <changeSet changeId="ChangeSet-with-command-insert" author="dlozovoy" runAsCommand="true">
         <script>
-            {ins: "commands",  documents: [ {"code" : "CODE1", "description": "example of organization1", "version" : 0}]}
+            {insert: "commands",  documents: [ {"code" : "CODE1", "description": "example of organization1", "version" : 0}]}
         </script>
     </changeSet>
 </mongoChangeLog>
