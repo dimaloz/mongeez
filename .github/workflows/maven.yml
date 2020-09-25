@@ -16,8 +16,8 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
-    - name: 'Build with Maven'
-      run: mvn -B package --file pom.xml
+    - name: 'Build and Run Tests with Maven'
+      run: mvn test --batch-mode -Dmaven.test.failure.ignore=true
     - name: 'Publish Test Report'
       uses: scacap/action-surefire-report@v1
       with:
