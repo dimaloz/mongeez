@@ -10,17 +10,21 @@
 
 package org.mongeez.reader;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mongeez.commands.ChangeSet;
 import org.mongeez.validation.ValidationException;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.testng.annotations.Test;
 
 import java.nio.charset.Charset;
 import java.util.List;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 public class FormattedJavascriptChangeSetReaderTest {
     @Test
@@ -78,16 +82,6 @@ public class FormattedJavascriptChangeSetReaderTest {
                         "});\n");
     }
 
-    @Test(expectedExceptions = ValidationException.class)
-    public void testGetChangeSetsNoHeader() throws Exception {
-        parse("changeset_noheader.js");
-    }
-
-    @Test(expectedExceptions = ValidationException.class)
-    public void testGetChangeSetsEmptyScript() throws Exception {
-        parse("changeset_emptyscript.js");
-    }
-
     @Test
     public void testGetChangeSetsAlternateEncoding() throws Exception {
         List<ChangeSet> changeSets = parse(Charset.forName("Cp1252"), "changeset_Cp1252.js");
@@ -138,9 +132,14 @@ public class FormattedJavascriptChangeSetReaderTest {
                         "db.user.insert({ \"Name\" : \"Oleks�� Iepishkin\"});\n");
     }
 
-    @Test(expectedExceptions = ValidationException.class)
-    public void testGetChangeSetsIOFailure() throws Exception {
-        parse("changeset_nonexistant.js");
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "changeset_nonexistant.js",
+            "changeset_noheader.js",
+            "changeset_emptyscript.js"
+    })
+    public void testParseWithException(String changeSetFileName) {
+        assertThrows(ValidationException.class, () -> parse(changeSetFileName));
     }
 
     @Test
@@ -169,8 +168,7 @@ public class FormattedJavascriptChangeSetReaderTest {
                 new FormattedJavascriptChangeSetReader(charset) :
                 new FormattedJavascriptChangeSetReader();
         Resource file = new ClassPathResource(fileName, getClass());
-        List<ChangeSet> changeSets = reader.getChangeSets(file);
-        return changeSets;
+        return reader.getChangeSets(file);
     }
 
     private void assertChangeSetEquals(ChangeSet actual, String expectedAuthor, String expectedChangeId, boolean expectedRunAlways, String expectedFile, String expectedBody) {

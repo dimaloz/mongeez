@@ -12,63 +12,27 @@
 
 package org.mongeez;
 
-import com.mongodb.DB;
-import com.mongodb.DBObject;
-import com.mongodb.Mongo;
-import com.mongodb.MongoClient;
-import com.mongodb.QueryBuilder;
-import de.flapdoodle.embed.mongo.MongodStarter;
-import de.flapdoodle.embed.mongo.config.IMongodConfig;
-import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
-import de.flapdoodle.embed.mongo.config.Net;
-import de.flapdoodle.embed.mongo.distribution.Version;
-import de.flapdoodle.embed.process.runtime.Network;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mongeez.validation.ValidationException;
-import org.springframework.core.io.ClassPathResource;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mongeez.TestDatabaseSetup.db;
 
-@Test
-public class MongeezTest {
-    private final String dbName = "test_mongeez";
-    private final int port = 27019;
-    private Mongo mongo;
-    private DB db;
 
-    @BeforeClass
-    protected void setUp() throws Exception {
-        mongo = new Mongo();
-        MongodStarter starter = MongodStarter.getDefaultInstance();
-        String host = "localhost";
+public class MongeezDaoTest {
 
-        IMongodConfig mongodConfig = new MongodConfigBuilder()
-                .version(Version.Main.PRODUCTION)
-                .net(new Net(host, port, Network.localhostIsIPv6()))
-                .build();
-
-        starter.prepare(mongodConfig).start();
-
-        mongo = new MongoClient(host, port);
-        db = mongo.getDB(dbName);
-    }
-
-    @BeforeMethod
+    @BeforeEach
     protected void setUpBeforeEachTest() {
         db.dropDatabase();
     }
 
-    private Mongeez create(String path) {
-        Mongeez mongeez = new Mongeez();
-        mongeez.setFile(new ClassPathResource(path));
-        mongeez.setMongo(mongo);
-        mongeez.setDbName(dbName);
-        return mongeez;
+    protected Mongeez create(String path) {
+        return TestDatabaseSetup.createMongeez(path);
     }
 
-    @Test(groups = "dao")
+    @Test
     public void testMongeez() throws Exception {
         Mongeez mongeez = create("mongeez.xml");
 
@@ -80,13 +44,13 @@ public class MongeezTest {
         assertEquals(db.getCollection("user").count(), 2);
     }
 
-    @Test(groups = "dao")
+    @Test
     public void testRunTwice() throws Exception {
         testMongeez();
         testMongeez();
     }
 
-    @Test(groups = "dao")
+    @Test
     public void testFailOnError_False() throws Exception {
         assertEquals(db.getCollection("mongeez").count(), 0);
 
@@ -96,13 +60,13 @@ public class MongeezTest {
         assertEquals(db.getCollection("mongeez").count(), 2);
     }
 
-    @Test(groups = "dao", expectedExceptions = com.mongodb.MongoCommandException.class)
+    @Test
     public void testFailOnError_True() throws Exception {
         Mongeez mongeez = create("mongeez_fail_fail.xml");
-        mongeez.process();
+        assertThrows(com.mongodb.MongoCommandException.class, mongeez::process);
     }
 
-    @Test(groups = "dao")
+    @Test
     public void testNoFiles() throws Exception {
         Mongeez mongeez = create("mongeez_empty.xml");
         mongeez.process();
@@ -110,7 +74,7 @@ public class MongeezTest {
         assertEquals(db.getCollection("mongeez").count(), 1);
     }
 
-    @Test(groups = "dao")
+    @Test
     public void testNoFailureOnEmptyChangeLog() throws Exception {
         assertEquals(db.getCollection("mongeez").count(), 0);
 
@@ -120,15 +84,15 @@ public class MongeezTest {
         assertEquals(db.getCollection("mongeez").count(), 1);
     }
 
-    @Test(groups = "dao", expectedExceptions = ValidationException.class)
+    @Test
     public void testNoFailureOnNoChangeFilesBlock() throws Exception {
         assertEquals(db.getCollection("mongeez").count(), 0);
 
         Mongeez mongeez = create("mongeez_no_changefiles_declared.xml");
-        mongeez.process();
+        assertThrows(ValidationException.class, mongeez::process);
     }
 
-    @Test(groups = "dao")
+    @Test
     public void testChangesWContextContextNotSet() throws Exception {
         assertEquals(db.getCollection("mongeez").count(), 0);
 
@@ -141,7 +105,7 @@ public class MongeezTest {
         assertEquals(db.getCollection("house").count(), 0);
     }
 
-    @Test(groups = "dao")
+    @Test
     public void testChangesWContextContextSetToUsers() throws Exception {
         assertEquals(db.getCollection("mongeez").count(), 0);
 
@@ -155,7 +119,7 @@ public class MongeezTest {
         assertEquals(db.getCollection("house").count(), 2);
     }
 
-    @Test(groups = "dao")
+    @Test
     public void testChangesWContextContextSetToOrganizations() throws Exception {
         assertEquals(db.getCollection("mongeez").count(), 0);
 
@@ -169,34 +133,11 @@ public class MongeezTest {
         assertEquals(db.getCollection("house").count(), 2);
     }
 
-    @Test(groups = "dao", expectedExceptions = ValidationException.class)
+    @Test
     public void testFailDuplicateIds() throws Exception {
         Mongeez mongeez = create("mongeez_fail_on_duplicate_changeset_ids.xml");
-        mongeez.process();
+        assertThrows(ValidationException.class, mongeez::process);
     }
 
-    @Test(groups = "commands")
-    public void testScriptWithCommand(){
-        Mongeez mongeez = create("mongeez_with_command_insert.xml");
-        mongeez.process();
-        assertEquals(db.getCollection("commands").count(), 1);
 
-        DBObject q = new QueryBuilder().put("code").is("CODE1").get();
-        DBObject result = db.getCollection("commands").findOne(q);
-        assertEquals(((String) result.get("description")), "example of organization1");
-    }
-
-    @Test(groups = "commands")
-    public void testScriptWithCommandUpdate(){
-        Mongeez mongeez = create("mongeez_with_command_insert.xml");
-        mongeez.process();
-
-        mongeez = create("mongeez_with_command_update.xml");
-        mongeez.process();
-        assertEquals(db.getCollection("commands").count(), 1);
-
-        DBObject q = new QueryBuilder().put("code").is("CODE1").get();
-        DBObject result = db.getCollection("commands").findOne(q);
-        assertEquals(((String) result.get("description")), "updated description of organization1");
-    }
 }
