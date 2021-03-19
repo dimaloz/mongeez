@@ -36,7 +36,7 @@ public abstract class TestDatabaseSetup {
         MongodStarter starter = MongodStarter.getDefaultInstance();
         String host = "localhost";
 
-        IMongodConfig mongodConfig = null;
+        IMongodConfig mongodConfig;
         try {
             mongodConfig = new MongodConfigBuilder()
                     .version(Version.Main.PRODUCTION)
